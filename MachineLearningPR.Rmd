@@ -1,0 +1,136 @@
+---
+title: "MachineLearningPR"
+author: "Manu"
+date: "November 20, 2017"
+output:
+  html_document: default
+  
+---
+Machine Learning Peer Reviewed Project
+BACKGROUND
+Using devices such as Jawbone Up, Nike FuelBand, and Fitbit it is now possible to collect a large amount of data about personal activity relatively inexpensively. These type of devices are part of the quantified self movement - a group of enthusiasts who take measurements about themselves regularly to improve their health, to find patterns in their behavior, or because they are tech geeks. One thing that people regularly do is quantify how much of a particular activity they do, but they rarely quantify how well they do it. In this project, your goal will be to use data from accelerometers on the belt, forearm, arm, and dumbell of 6 participants. They were asked to perform barbell lifts correctly and incorrectly in 5 different ways.
+
+
+In this project, we will be looking at wearables data to try and determine in which way they did the exercise.
+
+The goal of your project is to predict the manner in which they did the exercise. This is the "classe" variable in the training set. You may use any of the other variables to predict with.
+
+First, we'll take a look at how to load the data and format it for analysis
+```{r, include=TRUE, echo = TRUE}
+library(caret)
+library(randomForest) #Random forest for classification and regression
+## randomForest 4.6-10
+## Type rfNews() to see new features/changes/bug fixes.
+library(rpart) # Regressive Partitioning and Regression trees
+library(rpart.plot) # Decision Tree plot
+
+trainingdata<- read.csv("C:/Users/Manuel/Desktop/Coursera/MachineLearning/pml-training.csv", na.strings = c("NA",""))
+
+
+testingdata<- read.csv("C:/Users/Manuel/Desktop/Coursera/MachineLearning/pml-testing.csv", na.strings= c("NA",""))
+
+
+head(trainingdata)
+head(testingdata)
+#Then, We try to clear all the NA values in the data
+trainingdata<- trainingdata[,colSums(is.na(trainingdata))==0]
+testingdata<-testingdata[,colSums(is.na(testingdata))==0]
+
+#Also, since we will not be using all of the data. We eliminate the data that we will not be using
+trainingdata   <-trainingdata[,-c(1:7)]
+testingdata <-testingdata[,-c(1:7)]
+
+```
+
+After formatting, we take a look at the newly formatted data:
+```{r, include=TRUE, echo = TRUE}
+dim(trainingdata)
+dim(testingdata)
+
+head(trainingdata)
+head(testingdata)
+
+summary(trainingdata)
+summary(testingdata)
+
+```
+Below is a look at the cross Validation Analysis;
+
+```{r, echo = TRUE}
+library(caret)
+library(rpart) # Regressive Partitioning and Regression treeslibrary(rpart.plot) # Decision Tree plot
+
+#Loading the Data:
+trainingdata<- read.csv("C:/Users/Manuel/Desktop/Coursera/MachineLearning/pml-training.csv", na.strings = c("NA",""))
+
+
+testingdata<- read.csv("C:/Users/Manuel/Desktop/Coursera/MachineLearning/pml-testing.csv", na.strings= c("NA",""))
+
+
+#Data Cleanup:
+#Need to get rid of all the NA values in the datasets
+trainingdata<- trainingdata[,colSums(is.na(trainingdata))==0]
+testingdata<-testingdata[,colSums(is.na(testingdata))==0]
+
+#removing the stuff we dont need:
+trainingdata   <-trainingdata[,-c(1:7)]
+testingdata <-testingdata[,-c(1:7)]
+
+inTrain<-createDataPartition(y=trainingdata$classe, p = 0.75,list= FALSE)
+training<- trainingdata[inTrain,]
+testing <- trainingdata[-inTrain,]
+
+#Cross Validation-Caret using Repeated K-Fold Cross Validation
+# define training control
+train_control <- trainControl(method="boot", number=100)
+# train the model
+model2 <- train(classe ~., data=trainingdata, trControl=train_control, method="rpart")
+
+print(model2)
+
+
+```
+
+We then set up the data for it to be able to be predicted. Firstly, the data will be run using a decision tree. Followed by a randomForest analysis. My prediction is that the randomTree analysis will yield more accurate results:
+```{r, include=TRUE, echo = TRUE}
+#plotting the decision tree"
+library(rpart)
+library(rpart.plot)
+library(caret)
+library(randomForest)
+#Predicting the data set using "classe"
+
+inTrain<-createDataPartition(y=trainingdata$classe, p = 0.75,list= FALSE)
+training<- trainingdata[inTrain,]
+testing <- trainingdata[-inTrain,]
+
+#graphing training values
+plot(training$classe,col="orange", main=" Classes in the Training data",xlab="levels",ylab="Frequency")
+
+
+#Using a DecisionTree:
+model1<- rpart( classe ~ .,  data= training, method = "class")
+
+pred<- predict(model1, testing, type ="class")
+
+confusionMatrix(pred, testing$classe)
+
+#DecisionTree PLot
+rpart.plot(model1,main="Tree",extra=102, under=TRUE,faclen=0)
+```
+Above, we looked at the data using a Decision Tree to predict the values for A-E. One figure to note is the low accuracy rate hovering around 65%. Now, we look at a different way to conduct the prediction that involves the use of a random Forest tree
+
+```{r, include=TRUE, echo = TRUE}
+model1<- rpart( classe ~ .,  data= training, method = "class")
+
+pred<- predict(model1, testing, type ="class")
+
+confusionMatrix(pred, testing$classe)
+
+
+```
+Conclusion:
+
+Overall, the random Forestis much more accurate at predicting the values. Its accuracy rate is > 99%. So, in my opinion it is much better to use a random forest as it is the most accurate prediction model.
+
+
